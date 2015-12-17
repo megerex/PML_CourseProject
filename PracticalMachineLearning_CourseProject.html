@@ -70,7 +70,7 @@ img {
 
 <div id="introduction" class="section level3">
 <h3>1. Introduction</h3>
-<p>This project aims at predict the manner in which ego-surveillance device users did their exercise. The goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. Approach this report adopted is an ensemble model. Seven individual models are blended, namely 1. Bayes general linear model; 2.Linear discriminant analysis; 3. Logit boosting; 4. Neuron network; 5. Random forest; 6. Linear support vector machine; 7. Radial support vector machine. The final ensemble model combines all aforementioned models with improved accuracy. The prdiction result is reported by ensemble model. The accuracy of all models are evaluated as well.</p>
+<p>This project aims at predicting the manner in which ego-surveillance device users did their exercises. The goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. This report adopted an <strong>ensemble model</strong> for prediction. <strong>Five</strong> individual classification models are ensembled, namely 1. Linear discriminant analysis (LDA); 2. Neuron network (NNET); 3. Random forest (RF); 4. Linear support vector machine (SVMLin); 5. Radial support vector machine (SVMRad). Pre-process by Principle component analysis was carried out as training control. Variables with over 80% correlation have been collapsed into PCA variables in model training. The final model is ensembled from the aforementioned models by random forest classification. Final prediction is made and submitted by ensemble model in <strong>Result</strong> section. The accuracy and <strong>out-of-sample error</strong> of all models are evaluated in <strong>discussion</strong> section.</p>
 </div>
 <div id="codes-are-processes." class="section level3">
 <h3>2. Codes are Processes.</h3>
@@ -112,104 +112,88 @@ dataset.test  &lt;- dataset.test[, var.avecNA]</code></pre>
 <pre class="r"><code>var.avecClasse &lt;- colnames(dataset.train) == &quot;classe&quot;
 var.correlated &lt;- findCorrelation(cor(dataset.train[, !var.avecClasse]), cutoff=0.8)
 names(dataset.train)[var.correlated]
+## The existence of highly correlated variables shows the necessity of applying the principle component anlysis.
 var.TrainControl &lt;- trainControl(method = &quot;cv&quot;, preProcOptions=&quot;pca&quot;, number = 7, verboseIter=FALSE , allowParallel=TRUE)</code></pre>
 </div>
-<div id="devide-training-data-into-training-and-subtesting-blending-subsets." class="section level4">
-<h4>2.5 devide training data into training and subtesting (blending) subsets.</h4>
+<div id="devide-training-data-into-training-and-subtesting-ensemble-subsets." class="section level4">
+<h4>2.5 devide training data into training and subtesting (ensemble) subsets.</h4>
 <pre class="r"><code>subtrain &lt;- createDataPartition(y=dataset.train$classe, p=0.80, list=FALSE)
 dataset.subtrain &lt;- dataset.train[subtrain, ] 
 dataset.subtest &lt;-  dataset.train[-subtrain,]</code></pre>
 </div>
-<div id="supervised-machine-learning-under-seven-designated-models." class="section level4">
-<h4>2.6 supervised machine learning under seven designated models.</h4>
-<pre class="r"><code>mod.BGLM     &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;bayesglm&quot;,             trControl= var.TrainControl)</code></pre>
-<pre><code>## Loading required package: arm
-## Loading required package: MASS
-## Loading required package: Matrix
-## Loading required package: lme4
-## 
-## arm (Version 1.8-6, built: 2015-7-7)
-## 
-## Working directory is C:/Users/admin/Documents/PML_CourseProject</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre class="r"><code>mod.LDA      &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;lda&quot;,                  trControl= var.TrainControl)
-mod.LOGB     &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;LogitBoost&quot;,           trControl= var.TrainControl)</code></pre>
-<pre><code>## Loading required package: caTools</code></pre>
-<pre class="r"><code>mod.NNET     &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;nnet&quot;,  verbose=FALSE, trControl= var.TrainControl)</code></pre>
+<div id="supervised-machine-learning-under-five-designated-models." class="section level4">
+<h4>2.6 supervised machine learning under five designated models.</h4>
+<pre class="r"><code>mod.LDA &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;lda&quot;, trControl= var.TrainControl)</code></pre>
+<pre><code>## Loading required package: MASS</code></pre>
+<pre class="r"><code>mod.NNET &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;nnet&quot;,  verbose=FALSE, trControl= var.TrainControl)</code></pre>
 <pre><code>## Loading required package: nnet</code></pre>
-<pre class="r"><code>mod.RF       &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;rf&quot;,                   trControl= var.TrainControl)
-mod.SVMLin   &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;svmLinear&quot;,            trControl= var.TrainControl)</code></pre>
+<pre class="r"><code>mod.RF &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;rf&quot;, trControl= var.TrainControl)
+mod.SVMLin &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;svmLinear&quot;, trControl= var.TrainControl)</code></pre>
 <pre><code>## Loading required package: kernlab</code></pre>
-<pre class="r"><code>mod.SVMRad   &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;svmRadial&quot;,            trControl= var.TrainControl)</code></pre>
+<pre class="r"><code>mod.SVMRad &lt;- train(classe ~ ., data = dataset.subtrain, method = &quot;svmRadial&quot;, trControl= var.TrainControl)</code></pre>
 </div>
-<div id="acquire-prediction-under-each-of-the-models." class="section level4">
-<h4>2.7 acquire prediction under each of the models.</h4>
-<ul>
-<li>For building a blender model, the predictions are fed back to the original dataset of both <code>dataset.subtest</code> and <code>dataset.test</code>. <strong>YES, BOTH!</strong></li>
-</ul>
-<pre class="r"><code>dataset.subtest$pred.GBLM    &lt;- predict(object = mod.BGLM,   newdata = dataset.subtest)
-dataset.subtest$pred.LDA     &lt;- predict(object = mod.LDA,    newdata = dataset.subtest)
-dataset.subtest$pred.LOGB    &lt;- predict(object = mod.LOGB,   newdata = dataset.subtest)
-dataset.subtest$pred.NNET    &lt;- predict(object = mod.NNET,   newdata = dataset.subtest)
-dataset.subtest$pred.RF      &lt;- predict(object = mod.RF,     newdata = dataset.subtest)
-dataset.subtest$pred.SVMLin  &lt;- predict(object = mod.SVMLin, newdata = dataset.subtest)
-dataset.subtest$pred.SVMRad  &lt;- predict(object = mod.SVMRad, newdata = dataset.subtest)
-
-dataset.test$pred.GBLM    &lt;- predict(object = mod.BGLM,   newdata = dataset.test)
-dataset.test$pred.LDA     &lt;- predict(object = mod.LDA,    newdata = dataset.test)
-dataset.test$pred.LOGB    &lt;- predict(object = mod.LOGB,   newdata = dataset.test)
-dataset.test$pred.NNET    &lt;- predict(object = mod.NNET,   newdata = dataset.test)
-dataset.test$pred.RF      &lt;- predict(object = mod.RF,     newdata = dataset.test)
-dataset.test$pred.SVMLin  &lt;- predict(object = mod.SVMLin, newdata = dataset.test)
-dataset.test$pred.SVMRad  &lt;- predict(object = mod.SVMRad, newdata = dataset.test)
-
-blend.predictors &lt;- c(&quot;pred.GBLM&quot;, &quot;pred.LDA&quot;, &quot;pred.LOGB&quot;, &quot;pred.NNET&quot;, &quot;pred.RF&quot;, &quot;pred.SVMLin&quot;, &quot;pred.SVMRad&quot;)
-## blend.predictors &lt;- names(dataset.subtest)[names(dataset.subtest) != dataset.names]</code></pre>
+<div id="acquire-prediction-under-each-of-the-models-on-ensemble-dataset-dataset.subtest." class="section level4">
+<h4>2.7 acquire prediction under each of the models on ensemble dataset <code>dataset.subtest</code>.</h4>
+<pre class="r"><code>pred.LDA     &lt;- predict(object = mod.LDA,    newdata = dataset.subtest)
+pred.NNET    &lt;- predict(object = mod.NNET,   newdata = dataset.subtest)
+pred.RF      &lt;- predict(object = mod.RF,     newdata = dataset.subtest)
+pred.SVMLin  &lt;- predict(object = mod.SVMLin, newdata = dataset.subtest)
+pred.SVMRad  &lt;- predict(object = mod.SVMRad, newdata = dataset.subtest)</code></pre>
 </div>
 <div id="establish-ensemble-model." class="section level4">
 <h4>2.8 establish ensemble model.</h4>
-<pre class="r"><code>mod.ENS     &lt;- train(classe ~ ., data = dataset.subtest, method = &quot;rf&quot;, trControl= var.TrainControl)</code></pre>
+<pre class="r"><code>dataset.ensemble &lt;- data.frame(LDA = pred.LDA, NNET = pred.NNET, RF = pred.RF, SVMLin = pred.SVMLin, SVMRad = pred.SVMRad, classe = dataset.subtest$classe)
+mod.ENS &lt;- train(classe ~ ., data = dataset.ensemble, method = &quot;rf&quot;)</code></pre>
 </div>
 <div id="acquire-prediction-under-ensemble-model." class="section level4">
 <h4>2.9 acquire prediction under ensemble model.</h4>
-<pre class="r"><code>pred.ENS &lt;- predict(object = mod.ENS, newdata = dataset.test)</code></pre>
+<pre class="r"><code>predt.LDA     &lt;- predict(object = mod.LDA,    newdata = dataset.test)
+predt.NNET    &lt;- predict(object = mod.NNET,   newdata = dataset.test)
+predt.RF      &lt;- predict(object = mod.RF,     newdata = dataset.test)
+predt.SVMLin  &lt;- predict(object = mod.SVMLin, newdata = dataset.test)
+predt.SVMRad  &lt;- predict(object = mod.SVMRad, newdata = dataset.test)
+dataset.test.ens &lt;- data.frame(LDA = predt.LDA, NNET = predt.NNET, RF = predt.RF, SVMLin = predt.SVMLin, SVMRad = predt.SVMRad)
+pred.ENS &lt;- predict(object = mod.ENS, newdata = dataset.test.ens)</code></pre>
 </div>
 </div>
 <div id="result" class="section level3">
 <h3>3. Result</h3>
 <p>The result of the predition by ensemble model is as follows.</p>
 <pre class="r"><code>pred.ENS</code></pre>
-<pre><code>##  [1] B A A E D B A A C A E E A B B B
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 </div>
 <div id="discussion" class="section level3">
 <h3>4. Discussion</h3>
-<p>The accuracy of prediction is improved. Evidence is as follows. Models with multiple solutions retain its optimal.</p>
-<pre class="r"><code>mod.BGLM$results$Accuracy</code></pre>
-<pre><code>## [1] 0.4030828</code></pre>
+<div id="the-accuracy-of-prediction-is-improved.-evidence-is-as-follows.-models-with-multiple-solutions-retain-its-optimum." class="section level4">
+<h4>4.1 The accuracy of prediction is improved. Evidence is as follows. Models with multiple solutions retain its optimum.</h4>
 <pre class="r"><code>mod.LDA$results$Accuracy</code></pre>
-<pre><code>## [1] 0.7043126</code></pre>
-<pre class="r"><code>mod.LOGB$results$Accuracy</code></pre>
-<pre><code>## [1] 0.8191119 0.8728726 0.8943002</code></pre>
+<pre><code>## [1] 0.7020813</code></pre>
 <pre class="r"><code>mod.NNET$results$Accuracy</code></pre>
-<pre><code>## [1] 0.3397708 0.3235932 0.3423774 0.3734053 0.3743474 0.3839737 0.4114909
-## [8] 0.4123831 0.4311829</code></pre>
+<pre><code>## [1] 0.3338414 0.3544205 0.3371565 0.3646655 0.3981247 0.3724483 0.4071638
+## [8] 0.4177985 0.4088183</code></pre>
 <pre class="r"><code>mod.RF$results$Accuracy </code></pre>
-<pre><code>## [1] 0.9938213 0.9930571 0.9848402</code></pre>
+<pre><code>## [1] 0.9933116 0.9927380 0.9838840</code></pre>
 <pre class="r"><code>mod.SVMLin$results$Accuracy</code></pre>
-<pre><code>## [1] 0.7864195</code></pre>
+<pre><code>## [1] 0.7870578</code></pre>
 <pre class="r"><code>mod.SVMRad$results$Accuracy</code></pre>
-<pre><code>## [1] 0.8733677 0.9029237 0.9277008</code></pre>
+<pre><code>## [1] 0.8745138 0.9043885 0.9294858</code></pre>
 <pre class="r"><code>mod.ENS$results$Accuracy</code></pre>
-<pre><code>## [1] 0.9853643 0.9940277 0.9937282</code></pre>
-<p>It is thus evident that <code>mod.ENS</code> has the highest prediction accuracy of all tested models.</p>
+<pre><code>## [1] 0.9929066 0.9928794 0.9924347</code></pre>
+</div>
+<div id="out-of-sample-error-of-each-model." class="section level4">
+<h4>4.2 Out of sample error of each model.</h4>
+<ul>
+<li><strong>out-of-sample error</strong> is estimated by examine the prediction quality on subtesting (ensemble) dataset <code>dataset.subtest</code>. It can be estimated that an everage error rate of 19/3923 or 0.484% is expected to occur in prediction.</li>
+</ul>
+<pre class="r"><code>mod.ENS$finalModel$confusion</code></pre>
+<pre><code>##      A   B   C   D   E class.error
+## A 1111   2   2   0   1 0.004480287
+## B    2 754   3   0   0 0.006587615
+## C    0   5 677   2   0 0.010233918
+## D    0   0   9 632   2 0.017107309
+## E    0   0   0   2 719 0.002773925</code></pre>
+</div>
 </div>
 
 

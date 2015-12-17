@@ -5,10 +5,9 @@ date: '2015-12-13'
 output: html_document
 ---
 ### 1. Introduction    
-This project aims at predict the manner in which ego-surveillance device users did their exercise. The goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
-Approach this report adopted is an ensemble model. Seven individual models are blended, namely 1. Bayes general linear model; 2.Linear discriminant analysis; 3. Logit boosting; 4. Neuron network; 5. Random forest; 6. Linear support vector machine; 7. Radial support vector machine.
-The final ensemble model combines all aforementioned models with improved accuracy.
-The prdiction result is reported by ensemble model. The accuracy of all models are evaluated as well.
+This project aims at predicting the manner in which ego-surveillance device users did their exercises. The goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+This report adopted an __ensemble model__ for prediction. __Five__ individual classification models are ensembled, namely 1. Linear discriminant analysis (LDA); 2. Neuron network (NNET); 3. Random forest (RF); 4. Linear support vector machine (SVMLin); 5. Radial support vector machine (SVMRad). Pre-process by Principle component analysis was carried out as training control. Variables with over 80% correlation have been collapsed into PCA variables in model training.
+The final model is ensembled from the aforementioned models by random forest classification. Final prediction is made and submitted by ensemble model in __Result__ section. The accuracy and __out-of-sample error__ of all models are evaluated in __discussion__ section.
 
 ### 2. Codes are Processes.    
 #### 2.1 set global seed.    
@@ -48,58 +47,50 @@ dataset.test  <- dataset.test[, var.avecNA]
 var.avecClasse <- colnames(dataset.train) == "classe"
 var.correlated <- findCorrelation(cor(dataset.train[, !var.avecClasse]), cutoff=0.8)
 names(dataset.train)[var.correlated]
+## The existence of highly correlated variables shows the necessity of applying the principle component anlysis.
 var.TrainControl <- trainControl(method = "cv", preProcOptions="pca", number = 7, verboseIter=FALSE , allowParallel=TRUE)
 ```
 
-#### 2.5 devide training data into training and subtesting (blending) subsets.    
+#### 2.5 devide training data into training and subtesting (ensemble) subsets.    
 ```{r results="hide", message="FALSE", warning="FALSE"}
 subtrain <- createDataPartition(y=dataset.train$classe, p=0.80, list=FALSE)
 dataset.subtrain <- dataset.train[subtrain, ] 
 dataset.subtest <-  dataset.train[-subtrain,]
 ```
 
-#### 2.6 supervised machine learning under seven designated models.    
+#### 2.6 supervised machine learning under five designated models.    
 ```{r results="hide", message="FALSE", warning="FALSE"}
-mod.BGLM     <- train(classe ~ ., data = dataset.subtrain, method = "bayesglm",             trControl= var.TrainControl)
-mod.LDA      <- train(classe ~ ., data = dataset.subtrain, method = "lda",                  trControl= var.TrainControl)
-mod.LOGB     <- train(classe ~ ., data = dataset.subtrain, method = "LogitBoost",           trControl= var.TrainControl)
-mod.NNET     <- train(classe ~ ., data = dataset.subtrain, method = "nnet",  verbose=FALSE, trControl= var.TrainControl)
-mod.RF       <- train(classe ~ ., data = dataset.subtrain, method = "rf",                   trControl= var.TrainControl)
-mod.SVMLin   <- train(classe ~ ., data = dataset.subtrain, method = "svmLinear",            trControl= var.TrainControl)
-mod.SVMRad   <- train(classe ~ ., data = dataset.subtrain, method = "svmRadial",            trControl= var.TrainControl)
+mod.LDA <- train(classe ~ ., data = dataset.subtrain, method = "lda", trControl= var.TrainControl)
+mod.NNET <- train(classe ~ ., data = dataset.subtrain, method = "nnet",  verbose=FALSE, trControl= var.TrainControl)
+mod.RF <- train(classe ~ ., data = dataset.subtrain, method = "rf", trControl= var.TrainControl)
+mod.SVMLin <- train(classe ~ ., data = dataset.subtrain, method = "svmLinear", trControl= var.TrainControl)
+mod.SVMRad <- train(classe ~ ., data = dataset.subtrain, method = "svmRadial", trControl= var.TrainControl)
 ```
 
-#### 2.7 acquire prediction under each of the models.    
-+ For building a blender model, the predictions are fed back to the original dataset of both `dataset.subtest` and `dataset.test`. __YES, BOTH!__
+#### 2.7 acquire prediction under each of the models on ensemble dataset `dataset.subtest`.    
 ```{r results="hide", message="FALSE", warning="FALSE"}
-dataset.subtest$pred.GBLM    <- predict(object = mod.BGLM,   newdata = dataset.subtest)
-dataset.subtest$pred.LDA     <- predict(object = mod.LDA,    newdata = dataset.subtest)
-dataset.subtest$pred.LOGB    <- predict(object = mod.LOGB,   newdata = dataset.subtest)
-dataset.subtest$pred.NNET    <- predict(object = mod.NNET,   newdata = dataset.subtest)
-dataset.subtest$pred.RF      <- predict(object = mod.RF,     newdata = dataset.subtest)
-dataset.subtest$pred.SVMLin  <- predict(object = mod.SVMLin, newdata = dataset.subtest)
-dataset.subtest$pred.SVMRad  <- predict(object = mod.SVMRad, newdata = dataset.subtest)
-
-dataset.test$pred.GBLM    <- predict(object = mod.BGLM,   newdata = dataset.test)
-dataset.test$pred.LDA     <- predict(object = mod.LDA,    newdata = dataset.test)
-dataset.test$pred.LOGB    <- predict(object = mod.LOGB,   newdata = dataset.test)
-dataset.test$pred.NNET    <- predict(object = mod.NNET,   newdata = dataset.test)
-dataset.test$pred.RF      <- predict(object = mod.RF,     newdata = dataset.test)
-dataset.test$pred.SVMLin  <- predict(object = mod.SVMLin, newdata = dataset.test)
-dataset.test$pred.SVMRad  <- predict(object = mod.SVMRad, newdata = dataset.test)
-
-blend.predictors <- c("pred.GBLM", "pred.LDA", "pred.LOGB", "pred.NNET", "pred.RF", "pred.SVMLin", "pred.SVMRad")
-## blend.predictors <- names(dataset.subtest)[names(dataset.subtest) != dataset.names]
+pred.LDA     <- predict(object = mod.LDA,    newdata = dataset.subtest)
+pred.NNET    <- predict(object = mod.NNET,   newdata = dataset.subtest)
+pred.RF      <- predict(object = mod.RF,     newdata = dataset.subtest)
+pred.SVMLin  <- predict(object = mod.SVMLin, newdata = dataset.subtest)
+pred.SVMRad  <- predict(object = mod.SVMRad, newdata = dataset.subtest)
 ```
 
 #### 2.8 establish ensemble model.    
 ```{R results="hide", message="FALSE", warning="FALSE"}
-mod.ENS     <- train(classe ~ ., data = dataset.subtest, method = "rf", trControl= var.TrainControl)
+dataset.ensemble <- data.frame(LDA = pred.LDA, NNET = pred.NNET, RF = pred.RF, SVMLin = pred.SVMLin, SVMRad = pred.SVMRad, classe = dataset.subtest$classe)
+mod.ENS <- train(classe ~ ., data = dataset.ensemble, method = "rf")
 ```
 
 #### 2.9 acquire prediction under ensemble model.     
 ```{r results="hide", message="FALSE", warning="FALSE"}
-pred.ENS <- predict(object = mod.ENS, newdata = dataset.test)
+predt.LDA     <- predict(object = mod.LDA,    newdata = dataset.test)
+predt.NNET    <- predict(object = mod.NNET,   newdata = dataset.test)
+predt.RF      <- predict(object = mod.RF,     newdata = dataset.test)
+predt.SVMLin  <- predict(object = mod.SVMLin, newdata = dataset.test)
+predt.SVMRad  <- predict(object = mod.SVMRad, newdata = dataset.test)
+dataset.test.ens <- data.frame(LDA = predt.LDA, NNET = predt.NNET, RF = predt.RF, SVMLin = predt.SVMLin, SVMRad = predt.SVMRad)
+pred.ENS <- predict(object = mod.ENS, newdata = dataset.test.ens)
 ```
 
 
@@ -111,15 +102,18 @@ pred.ENS
 
 
 ### 4. Discussion    
-The accuracy of prediction is improved. Evidence is as follows. Models with multiple solutions retain its optimal.
+#### 4.1 The accuracy of prediction is improved. Evidence is as follows. Models with multiple solutions retain its optimum.
 ```{r}
-mod.BGLM$results$Accuracy
 mod.LDA$results$Accuracy
-mod.LOGB$results$Accuracy
 mod.NNET$results$Accuracy
 mod.RF$results$Accuracy 
 mod.SVMLin$results$Accuracy
 mod.SVMRad$results$Accuracy
 mod.ENS$results$Accuracy
 ```
-It is thus evident that `mod.ENS` has the highest prediction accuracy of all tested models.
+
+#### 4.2 Out of sample error of each model.
++ __out-of-sample error__ is estimated by examine the prediction quality on subtesting (ensemble) dataset `dataset.subtest`. It can be estimated that an everage error rate of 19/3923 or 0.484% is expected to occur in prediction.
+```{r}
+mod.ENS$finalModel$confusion
+```
